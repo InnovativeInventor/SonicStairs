@@ -31,9 +31,13 @@ import simpleaudio as sa
 import numpy # Maybe get rid of this
 import argparse
 import time
+import dataset
+import datafreeze
+from os import environ
 
 def main():
 	global arduino
+	global args
 	# try:
 	# 	arduino = Serial("/dev/ttyUSB0",9600)
 	# 	arduino.open()
@@ -41,6 +45,8 @@ def main():
 	# except: #SerialException
 	# 	print("Arduino not detected, please connect it to this computer")
 	# 	exit(1)
+
+	table = init_database()
 
 	try:
 		while True:
@@ -53,7 +59,9 @@ def main():
 
 			avg_distance = max(set(distance_array), key=distance_array.count)
 
-			# avg_distance = decode()
+			if args.save:
+				table.insert(dict(time=int(time.time()), value=avg_distance))
+				datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
 
 			print(avg_distance)
 
@@ -63,6 +71,9 @@ def main():
 				prev_obj = music(avg_distance)
 
 	except KeyboardInterrupt:
+		if args.save:
+			datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
+			
 		arduino.close() # Should close the serial port (hopefully)
 
 def connect_serial():
@@ -131,9 +142,20 @@ def music(avg_distance, prev_obj=0):
 		    print("Error: Music not found")
 		return play_obj
 
+def init_database();
+	# if not "DATABASE_URL" in environ:
+	# 	raise ValueError('Enviroment variable DATABASE_URL is not set')
+	# 	exit(1)
+
+	db = dataset.connect()
+	table = db['logs']
+	return table
+
+
 def arguments():
 	parser = argparse.ArgumentParser(description='A program to generate music from a ultrasonic sensor')
 	parser.add_argument("--port", "-p", type=str, default="/dev/ttyUSB0", help="Specifies serial port to use (default = /dev/ttyUSB0)")
+	parser.add_argument("--save", "-s", help="Exports logs to logs.csv when finished", action='store_true')
 	args = parser.parse_args()
 	return args
 
