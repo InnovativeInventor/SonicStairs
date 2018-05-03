@@ -38,47 +38,27 @@ from os import environ
 def main():
 	global arduino
 	global args
-	# try:
-	# 	arduino = Serial("/dev/ttyUSB0",9600)
-	# 	arduino.open()
-	#
-	# except: #SerialException
-	# 	print("Arduino not detected, please connect it to this computer")
-	# 	exit(1)
 
 	table = init_database()
 
 	try:
 		while True:
-			distance_array = []
+			avg_distance = sonic_averages()
 
-			for i in range(5):
-				distance = int(numpy.round(decode(),-1))
-				if not distance == 0:
-					distance_array.append(distance)
-
-			avg_distance = max(set(distance_array), key=distance_array.count)
-
-			if args.save:
-				table.insert(dict(time=int(time.time()), value=avg_distance))
-				datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
-
-			print(avg_distance)
-
+			# Really hacky solution, needs to change
 			try:
 				prev_obj = music(avg_distance,prev_obj)
 			except:
 				prev_obj = music(avg_distance)
 
+
 	except KeyboardInterrupt:
 		if args.save:
 			datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
-			
+
 		arduino.close() # Should close the serial port (hopefully)
 
-def connect_serial():
-	global args
-	port = args.port
+def connect_serial(port='/dev/ttyUSB0'):
 
 	try:
 		arduino = serial.Serial(port,9600)
@@ -94,6 +74,26 @@ def connect_serial():
 			exit(1)
 
 	return arduino
+
+def sonic_averages():
+	global args
+	distance_array = []
+
+	for i in range(5):
+		distance = int(numpy.round(decode(),-1))
+		if not distance == 0:
+			distance_array.append(distance)
+
+	avg_distance = max(set(distance_array), key=distance_array.count)
+
+	if args.verbose:
+		print(avg_distance)
+
+	if args.save:
+		table.insert(dict(time=int(time.time()), value=avg_distance))
+		datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
+
+	return avg_distance
 
 def decode():
 	global arduino
@@ -142,8 +142,8 @@ def music(avg_distance, prev_obj=0):
 		    print("Error: Music not found")
 		return play_obj
 
-def init_database();
-	# if not "DATABASE_URL" in environ:
+def init_database():
+	# if not os.environ['DATABASE_URL']:
 	# 	raise ValueError('Enviroment variable DATABASE_URL is not set')
 	# 	exit(1)
 
@@ -156,6 +156,7 @@ def arguments():
 	parser = argparse.ArgumentParser(description='A program to generate music from a ultrasonic sensor')
 	parser.add_argument("--port", "-p", type=str, default="/dev/ttyUSB0", help="Specifies serial port to use (default = /dev/ttyUSB0)")
 	parser.add_argument("--save", "-s", help="Exports logs to logs.csv when finished", action='store_true')
+	parser.add_argument("--verbose", "-v", help="Verbose option", action='store_true')
 	args = parser.parse_args()
 	return args
 
