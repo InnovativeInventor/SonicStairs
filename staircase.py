@@ -25,7 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import serial
+from serial import Serial
 import wave
 import simpleaudio as sa
 import numpy # Maybe get rid of this
@@ -34,22 +34,24 @@ import time
 import dataset
 import datafreeze
 from os import environ
+from statistics import median
 
-def main():
-	global arduino
-	global args
+def main(args, arduino):
 
 	table = init_database()
 
 	try:
 		while True:
-			avg_distance = sonic_averages()
+			avg_distance = sonic_averages(args, arduino, args.avg)
 
 			# Really hacky solution, needs to change
 			try:
 				prev_obj = music(avg_distance,prev_obj)
 			except:
 				prev_obj = music(avg_distance)
+
+			table.insert(dict(time=int(time.time()), value=avg_distance))
+			datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
 
 
 	except KeyboardInterrupt:
@@ -58,45 +60,43 @@ def main():
 
 		arduino.close() # Should close the serial port (hopefully)
 
-def connect_serial(port='/dev/ttyUSB0'):
+def connect_serial(port='/dev/ttyUSB0', bdrate = 9600):
 
 	try:
-		arduino = serial.Serial(port,9600)
+		arduino = Serial(port,bdrate)
 		# arduino.open()
 		# arduino = serial.Serial(port,9600)
 
 	except:
 		try:
-			arduino.close()
-			arduino = serial.Serial(port,9600)
+			arduino = Serial(port)
+
 		except:
-			print("Please plug in the Arduino and specify the correct serial port.")
-			exit(1)
+			try:
+				arduino.close()
+				arduino = Serial(port,bdrate)
+			except:
+				print("Please plug in the Arduino and specify the correct serial port.")
+				exit(1)
 
 	return arduino
 
-def sonic_averages():
-	global args
+def sonic_averages(args,arduino,avg=5):
 	distance_array = []
 
-	for i in range(5):
-		distance = int(numpy.round(decode(),-1))
+	for i in range(avg):
+		distance = int(numpy.round(decode(arduino),-1))
 		if not distance == 0:
 			distance_array.append(distance)
 
-	avg_distance = max(set(distance_array), key=distance_array.count)
+	avg_distance = int(median(distance_array))
 
 	if args.verbose:
 		print(avg_distance)
 
-	if args.save:
-		table.insert(dict(time=int(time.time()), value=avg_distance))
-		datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
-
 	return avg_distance
 
-def decode():
-	global arduino
+def decode(arduino):
 
 	# try:
 	# 	arduino.open()
@@ -105,7 +105,7 @@ def decode():
 	# 	arduino.close()
 	# 	arduino.open()
 
-	arduino.reset_input_buffer()
+	arduino.reset_input_buffer
 
 	serial = arduino.readline()
 	read_serial= serial.decode('utf-8', errors='ignore')
@@ -155,6 +155,7 @@ def init_database():
 def arguments():
 	parser = argparse.ArgumentParser(description='A program to generate music from a ultrasonic sensor')
 	parser.add_argument("--port", "-p", type=str, default="/dev/ttyUSB0", help="Specifies serial port to use (default = /dev/ttyUSB0)")
+	parser.add_argument("--avg", "-a", type=int, default=5, help="Specifies amount of readings to average (default = 5)")
 	parser.add_argument("--save", "-s", help="Exports logs to logs.csv when finished", action='store_true')
 	parser.add_argument("--verbose", "-v", help="Verbose option", action='store_true')
 	args = parser.parse_args()
@@ -163,4 +164,4 @@ def arguments():
 if __name__ == "__main__":
 	args = arguments()
 	arduino = connect_serial()
-	main()
+	main(args, arduino)

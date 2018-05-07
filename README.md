@@ -13,7 +13,7 @@ Steps:
 3. Run `staircase.py` with python3.
 
 ## Dependencies
-Python 3 dependencies (all availble through pip):
+Python 3 dependencies (most are installable through pip):
 - numpy
 - pyserial (not serial!)
 - simpleaudio
@@ -25,6 +25,11 @@ Python 3 dependencies (all availble through pip):
 - dataset
 - argparse
 - datafreeze
+
+Stuff needed for testing and developing:
+- Python 3.6
+- dummyserial
+- pyenv
 
 Arduino dependencies:
 - [NewPing](http://simpleaudio.readthedocs.io/en/latest/installation.html#linux-dependencies)

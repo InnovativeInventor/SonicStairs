@@ -1,18 +1,5 @@
-import os
-import pty
-import serial
-
-master, slave = pty.openpty()
-ser_name = os.ttyname(slave)
-
-ser = serial.Serial(ser_name)
-
-# To Write to the device
-ser.write(b'Your text')
-
-# To read from the device
-os.read(master,1000)
-
-print(master)
-print(ser.port)
-print(slave)
+from fakeserial import Serial
+ser = Serial('/dev/ttyS1', 19200, timeout=1, data=[3, 0, 1, 4, 7, 16, 31, 64, 127])
+line = ser.readline()   # read a '\n' terminated line
+print(line )
+ser.close()
