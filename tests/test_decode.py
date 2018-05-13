@@ -1,5 +1,5 @@
 from SonicStairs.staircase import decode
-from SonicStairs.fakeserial import Serial
+from SonicStairs.tests.fakeserial import Serial
 import secrets
 
 def test_decode():

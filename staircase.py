@@ -54,7 +54,7 @@ def main(args, arduino):
 			datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
 
 
-	except KeyboardInterrupt:
+	except KeyboardInterrupt: # Closes the port and updates the database if there is a keyboard interrupt
 		if args.save:
 			datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
 
@@ -81,7 +81,7 @@ def connect_serial(port='/dev/ttyUSB0', bdrate = 9600):
 
 	return arduino
 
-def sonic_averages(args,arduino,avg=5):
+def sonic_averages(args,arduino,avg=5): # Averages distances
 	distance_array = []
 
 	for i in range(avg):

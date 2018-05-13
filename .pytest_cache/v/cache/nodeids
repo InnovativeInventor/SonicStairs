@@ -1,3 +1,5 @@
 [
-  "tests/test_serial.py::test_serial"
+  "tests/test_decode.py::test_decode",
+  "tests/test_fakeserial.py::test_serialpi",
+  "tests/test_sonicavg.py::test_sonicavg"
 ]

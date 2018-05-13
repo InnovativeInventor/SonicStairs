@@ -1,6 +1,6 @@
 from SonicStairs.staircase import sonic_averages
 # import test_decode
-from SonicStairs.fakeserial import Serial
+from SonicStairs.tests.fakeserial import Serial
 import secrets
 import numpy
 import random
@@ -27,5 +27,5 @@ def test_sonicavg():
 
     tested_median = sonic_averages(Args, arduino, avg=len(input_array))
 
-
+    # Median needs to be within the standard deivation of the gauss function
     assert abs(int(tested_median) - int(correct_median)) <= 2

@@ -5,12 +5,12 @@ A musical staircase powered by an Arduino and ultrasonic sensor
 Requirements:
 - Arduino
 - nix-based OS with a USB port (Ubuntu, MacOS, etc.)
-- Ultrasonic sensor (tested with HC-SR04, but any NewPing-compatible sensor works)
+- Ultrasonic sensor (tested with HC-SR04, but any NewPing-compatible sensor should work)
 
 Steps:
 1. Connect your Arduino to the ultrasonic sensor with the trigger pin connected to pin 7, the echo pin connected to 8, and VCC/ground connected to 5v and GND.
 2. Upload `arduino_ultrasound/arduino_ultrasound.ino` to the Arduino
-3. Run `staircase.py` with python3.
+3. Plug in the Arduino and run `staircase.py` with python3.
 
 ## Dependencies
 Python 3 dependencies (most are installable through pip):
