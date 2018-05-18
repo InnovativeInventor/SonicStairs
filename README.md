@@ -38,3 +38,4 @@ Open up an issue if you find any more that you have to install that I haven't li
 
 # TODO
 - Removing testing/old code and get everything demonstration-ready.
+- Docker for portability?
