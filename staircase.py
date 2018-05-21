@@ -35,6 +35,11 @@ import dataset
 import datafreeze
 from os import environ
 from statistics import median
+import ast
+
+## Todo:
+# Remove args.avg
+
 
 def main(args, arduino):
 
@@ -43,15 +48,15 @@ def main(args, arduino):
 
 	try:
 		while True:
-			avg_distance = sonic_averages(args, arduino, args.avg)
+			(sensor, avg_distance) = sonic_averages(args, arduino)
 
 			# Really hacky solution, needs to change
 			try:
-				prev_obj = music(avg_distance,prev_obj)
+				prev_obj = music(sensor,args,avg_distance,prev_obj)
 			except:
-				prev_obj = music(avg_distance)
+				prev_obj = music(sensor,args,avg_distance)
 
-			table.insert(dict(time=int(time.time()), value=avg_distance))
+			table.insert(dict(time=int(time.time()), sensor = sensor, value=avg_distance))
 			datafreeze.freeze(db['logs'].all(), format='csv', filename='logs.csv')
 
 
@@ -82,20 +87,23 @@ def connect_serial(port='/dev/ttyUSB0', bdrate = 9600):
 
 	return arduino
 
-def sonic_averages(args,arduino,avg=5): # Averages distances
+def sonic_averages(args,arduino): # Averages distances
 	distance_array = []
 
-	for i in range(avg):
-		distance = int(numpy.round(decode(arduino),-1))
-		if not distance == 0:
-			distance_array.append(distance)
+	(sensor, distance) = decode(arduino)
 
-	avg_distance = int(median(distance_array))
+	output = [sensor]
+	if distance == 0:
+		(sensor, distance) = sonic_averages(args,arduino)
+
+	rounded_distance = int(numpy.round(distance,-1))
+
+	output.append(rounded_distance)
 
 	if args.verbose:
-		print(avg_distance)
+		print(str(sensor) + "," + str(rounded_distance))
 
-	return avg_distance
+	return output
 
 def decode(arduino):
 
@@ -113,7 +121,7 @@ def decode(arduino):
 	# arduino.close()
 
 	try:
-		measurement = int(read_serial.rstrip())
+		measurement = ast.literal_eval(read_serial.rstrip())
 	except ValueError:
 		measurement = decode(arduino)
 
@@ -122,12 +130,17 @@ def decode(arduino):
 
 	return measurement
 
-def music(avg_distance, prev_obj=0):
-	nearest_ten = numpy.round(avg_distance,-1)
-	wav_file = str(nearest_ten) + ".0.wav" # Example: 10.0.wav or 20.0.wav
+def music(sensor, args, avg_distance, prev_obj=0):
 
+	note_length = args.width/args.keywidth
+	note = int(sensor)+round(int(avg_distance)/note_length)
+	wav_file = str(note) + ".wav" # Example: 1.wav or 2.wav
+
+	if args.verbose:
+		print("File looking for:" + wav_file)
+		
 	# Just for testing purposes
-	if nearest_ten<120:
+	if True:
 		try:
 			wave_obj = sa.WaveObject.from_wave_file(wav_file)
 
@@ -138,18 +151,11 @@ def music(avg_distance, prev_obj=0):
 			play_obj = wave_obj.play()
 			time.sleep(0.5)
 		    # wave_obj = sa.WaveObject.from_wave_file("test.wav")
+			return play_obj
 
 		except FileNotFoundError:
-		    print("Error: Music not found")
-		return play_obj
-
-def init_database():
-	# if not os.environ['DATABASE_URL']:
-	# 	raise ValueError('Enviroment variable DATABASE_URL is not set')
-	# 	exit(1)
-
-
-	return table
+			print("Error: Music file " + wav_file +" not found")
+			return prev_obj
 
 
 def arguments():
@@ -158,6 +164,10 @@ def arguments():
 	parser.add_argument("--avg", "-a", type=int, default=5, help="Specifies amount of readings to average (default = 5)")
 	parser.add_argument("--save", "-s", help="Exports logs to logs.csv when finished", action='store_true')
 	parser.add_argument("--verbose", "-v", help="Verbose option", action='store_true')
+	parser.add_argument("--keywidth", "-kw", type=int, default=2, help="Specifies key width of staircase (default = 2)")
+	parser.add_argument("--keyheight", "-kh", type=int, default=5, help="Specifies key height of staircase (default = 5)")
+	parser.add_argument("--width", "-w", type=int, default=400, help="Specifies width of staircase in cm")
+	parser.add_argument("--scale", "-sc", type=int, default=7, help="Specifies scale length")
 	args = parser.parse_args()
 	return args
 
