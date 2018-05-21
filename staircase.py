@@ -38,7 +38,8 @@ from statistics import median
 
 def main(args, arduino):
 
-	table = init_database()
+	db = dataset.connect()
+	table = db['logs']
 
 	try:
 		while True:
@@ -114,10 +115,10 @@ def decode(arduino):
 	try:
 		measurement = int(read_serial.rstrip())
 	except ValueError:
-		measurement = decode()
+		measurement = decode(arduino)
 
 	if measurement == 0:
-		measurement = decode()
+		measurement = decode(arduino)
 
 	return measurement
 
@@ -147,8 +148,7 @@ def init_database():
 	# 	raise ValueError('Enviroment variable DATABASE_URL is not set')
 	# 	exit(1)
 
-	db = dataset.connect()
-	table = db['logs']
+
 	return table
 
 
